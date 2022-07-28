@@ -99,12 +99,12 @@ def create_config(observation_space, action_space, env_config) -> dict:
     https://docs.ray.io/en/latest/rllib/rllib-algorithms.html#a3c
 
     """
-  # We use the same policy for all agents
+  # We use different policies for each agents
   policies = {
-      "a3c":
-          PolicySpec(
-              observation_space=observation_space, action_space=action_space)
+      f"player_{num_player}": PolicySpec(observation_space=observation_space, action_space=action_space)
+      for num_player in range(env_config["num_players"])
   }
+
 
   horizon = env_config.lab2d_settings["maxEpisodeLengthFrames"]
 
@@ -130,7 +130,7 @@ def create_config(observation_space, action_space, env_config) -> dict:
           "policies":
               policies,
           "policy_mapping_fn":
-              lambda agent_id, episode, worker, **kwargs: "a3c",
+              lambda agent_id, episode, worker, **kwargs: f"{agent_id}",
       },
       # Resources
       "num_gpus": 1,
