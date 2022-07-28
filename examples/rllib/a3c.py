@@ -19,6 +19,7 @@ from os.path import realpath
 from ray import init
 from ray.rllib.policy.policy import PolicySpec
 from ray.tune import run
+from gym.spaces import discrete
 from ray.tune.registry import register_env
 from tensorflow.keras.optimizers import RMSprop
 
@@ -86,6 +87,20 @@ def create_optimizer() -> RMSprop:
   )
 
 
+def create_policies(observation_space: dict, action_space: discrete.Discrete, num_players: int) -> dict:
+  """Create the policies for each agent
+  
+  Deep mind have confirmed that they trained independent agents with their own
+  neural networks, trained from their own observations.
+  """
+  policies = {}
+  
+  for player_id in range(num_players):
+    policies[f"player_{player_id}"] = PolicySpec(observation_space=observation_space, action_space=action_space)
+  
+  return policies
+  
+
 def create_config(observation_space, action_space, env_config) -> dict:
   """Create the trainer config
     
@@ -99,12 +114,9 @@ def create_config(observation_space, action_space, env_config) -> dict:
     https://docs.ray.io/en/latest/rllib/rllib-algorithms.html#a3c
 
     """
-  # We use different policies for each agents
-  policies = {
-      f"player_{num_player}": PolicySpec(observation_space=observation_space, action_space=action_space)
-      for num_player in range(env_config["num_players"])
-  }
-
+  # Get the policies for each agent
+  num_players = env_config["num_players"]
+  policies = create_policies(observation_space, action_space, num_players)
 
   horizon = env_config.lab2d_settings["maxEpisodeLengthFrames"]
 
